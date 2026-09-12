@@ -91,6 +91,78 @@ hr {
   margin-bottom: 1rem;
 }
 
+.features * {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+.release-info * {
+  font-family: var(--font-mono);
+  font-size: 0.98rem;
+  display: inline-block;
+}
+
+/* Contributors card container */
+.card.contributors {
+  padding: 1.25rem 1.5rem;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-mono);
+}
+
+/* Contributors list */
+#contributors {
+  margin-top: 0.75rem;
+}
+
+#contributors-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+/* Contributor pill */
+#contributors-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--bg-color);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+/* Hover effect */
+#contributors-list li:hover {
+  background: var(--border-color);
+  transform: translateY(-2px);
+}
+
+/* Avatar */
+#contributors-list img {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Username link */
+#contributors-list a {
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--text-color);
+}
+
+#contributors-list a:hover {
+  text-decoration: underline;
+}
+
+
 .btn-windows {
   display: inline-flex;
   align-items: center;
@@ -114,4 +186,11 @@ hr {
 
 .icon-windows {
   flex-shrink: 0;
+}
+
+.preview-img {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
 }
