@@ -190,3 +190,10 @@ hr {
 .icon-windows {
   flex-shrink: 0;
 }
+
+.preview-img {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 1rem;
+}
