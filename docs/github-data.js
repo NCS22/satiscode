@@ -71,17 +71,35 @@ function renderContributors(contributors) {
   });
 }
 
+function renderReleaseUnavailable() {
+  document.getElementById("version").textContent = "Unavailable";
+  document.getElementById("release-date").textContent = "Unavailable";
+  document.getElementById("installer-size").textContent = "Unavailable";
+}
+
+function renderContributorsUnavailable() {
+  const list = document.getElementById("contributors-list");
+  list.textContent = "Contributors unavailable";
+}
+
 // --- bootstrap ---
 (async () => {
-  try {
-    const [release, contributors] = await Promise.all([
-      getLatestRelease(),
-      getContributors()
-    ]);
+  const [releaseResult, contributorsResult] = await Promise.allSettled([
+    getLatestRelease(),
+    getContributors()
+  ]);
 
-    renderReleaseInfo(release);
-    renderContributors(contributors);
-  } catch (err) {
-    console.error(err);
+  if (releaseResult.status === "fulfilled") {
+    renderReleaseInfo(releaseResult.value);
+  } else {
+    console.error(releaseResult.reason);
+    renderReleaseUnavailable();
+  }
+
+  if (contributorsResult.status === "fulfilled") {
+    renderContributors(contributorsResult.value);
+  } else {
+    console.error(contributorsResult.reason);
+    renderContributorsUnavailable();
   }
 })();

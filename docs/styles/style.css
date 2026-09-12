@@ -130,13 +130,10 @@ hr {
   display: flex;
   align-items: center;
   gap: 8px;
-
   padding: 6px 12px;
   border-radius: 20px;
-
   background: var(--bg-color);
   border: 1px solid var(--border-color);
-
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
