@@ -433,13 +433,18 @@
         });
       });
 
+      let changeTimeout = null;
+
       window.editor.onDidChangeModelContent(() => {
         if (!clangdStarted || !currentDocumentUri) return;
-        documentVersion++;
-        sendNotification('textDocument/didChange', {
-          textDocument: { uri: currentDocumentUri, version: documentVersion },
-          contentChanges: [{ text: window.editor.getValue() }]
-        });
+        if (changeTimeout) clearTimeout(changeTimeout);
+        changeTimeout = setTimeout(() => {
+          documentVersion++;
+          sendNotification('textDocument/didChange', {
+            textDocument: { uri: currentDocumentUri, version: documentVersion },
+            contentChanges: [{ text: window.editor.getValue() }]
+          });
+        }, 150);
       });
 
       // Open File Event

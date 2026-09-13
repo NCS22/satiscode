@@ -10,8 +10,8 @@ let isQuitting = false;
 function sendToClangd(message) {
   if (!clangdProcess || clangdProcess.stdin.destroyed) return;
   const body = Buffer.from(JSON.stringify(message), 'utf8');
-  clangdProcess.stdin.write(`Content-Length: ${body.length}\r\n\r\n`);
-  clangdProcess.stdin.write(body);
+  const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
+  clangdProcess.stdin.write(Buffer.concat([header, body]));
 }
 
 function sendToRenderer(event, channel, ...args) {
