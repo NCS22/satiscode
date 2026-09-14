@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
   <script type="module">
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
+    import { TabManager } from './UI/tab_manager/tabman.js';
 
     // Initialize local icon system from icons/style1/icons.json
     await initIcons();
@@ -17,6 +18,7 @@
     window.getFileIcon = getFileIcon;
     window.getFolderIcon = getFolderIcon;
     window.getChevronIcon = getChevronIcon;
+    window.TabManager = TabManager;
   </script>
 </head>
 <body>
@@ -59,6 +61,7 @@
       <div id="tree-root"></div>
     </aside>
     <div id="workspace">
+      <div id="tab-bar" class="tab-bar"></div>
       <div id="editor"></div>
       <section id="problems-panel" aria-label="Problems">
         <div id="problems-resizer" title="Resize Problems panel"></div>
@@ -221,7 +224,6 @@
         manualLanguage = language === 'auto' ? null : language;
         const selectedLanguage = activeLanguage(currentFilePath);
         
-        // Tells Monaco Editor to change syntax highlighting mode
         monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
         updateSourceLanguageLabel();
 
@@ -286,31 +288,174 @@
         });
       }
 
-      async function refreshFileTree(directoryPath) {
-        if (!directoryPath) return;
-        currentDirectory = directoryPath;
-        await renderDirectory(directoryPath, document.getElementById('tree-root'));
+      let openTabs = []; 
+      let activeTabId = null;
+      let untitledCounter = 1;
+
+      function createNewTab() {
+        const title = `Untitled-${untitledCounter++}`;
+        const model = monaco.editor.createModel('', 'plaintext');
+        tabManager.openTab(null, model, title);
       }
 
-      async function openLoadedFile(file) {
-        if (clangdStarted) {
-          if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
-          window.api.stopClangd();
-          clangdStarted = false;
-        }
-        currentFilePath = file.path;
-        currentDocumentUri = currentFilePath ? pathToUri(currentFilePath) : null;
-        manualLanguage = null;
-        currentDirectory = file.path.substring(0, Math.max(file.path.lastIndexOf('\\'), file.path.lastIndexOf('/')));
-        documentVersion = 1;
-        clearProblems();
-        monaco.editor.setModelLanguage(window.editor.getModel(), activeLanguage(file.path));
-        window.editor.setValue(file.content);
-        await refreshFileTree(currentDirectory);
-        if (isActiveCppLanguage()) startLanguageServer();
-        else document.getElementById('status').textContent = hasEditorLanguage(file.path) ? 'language: ready' : 'language: plaintext';
-        updateSourceLanguageLabel();
+      function renderTabsUI() {
+        const container = document.getElementById('tab-bar');
+        if (!container) return;
+        container.innerHTML = openTabs.map(tab => `
+          <div class="tab ${tab.id === activeTabId ? 'active' : ''}" data-tab-id="${tab.id}">
+            <span class="tab-title">${escapeHtml(tab.title)}${tab.isDirty ? ' •' : ''}</span>
+            <span class="close-btn" data-close-id="${tab.id}">&times;</span>
+          </div>
+        `).join('');
       }
+
+      const tabBarEl = document.getElementById('tab-bar');
+      if (tabBarEl) {
+        tabBarEl.addEventListener('click', (e) => {
+          const closeId = e.target.dataset.closeId || e.target.closest('[data-close-id]')?.dataset.closeId;
+          if (closeId) {
+            e.stopPropagation();
+            closeTab(closeId);
+            return;
+          }
+          const tabEl = e.target.closest('[data-tab-id]');
+          if (tabEl) switchTab(tabEl.dataset.tabId);
+        });
+
+        tabBarEl.addEventListener('auxclick', (e) => {
+          if (e.button === 1) {
+            const tabEl = e.target.closest('[data-tab-id]');
+            if (tabEl) closeTab(tabEl.dataset.tabId);
+          }
+        });
+      }
+
+      function switchTab(tabId) {
+        const tab = openTabs.find(t => t.id === tabId);
+        if (!tab) return;
+
+        activeTabId = tab.id;
+        currentFilePath = tab.filePath;
+        currentDocumentUri = tab.filePath ? pathToUri(tab.filePath) : null;
+
+        window.editor.setModel(tab.model);
+
+        updateSourceLanguageLabel();
+        if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
+
+        renderTabsUI();
+      }
+
+      function createOrFocusTab(filePath, content, title) {
+        let existing = openTabs.find(t => t.filePath && t.filePath === filePath);
+        if (existing) {
+          switchTab(existing.id);
+          return;
+        }
+
+        const lang = activeLanguage(filePath);
+        const uri = filePath ? monaco.Uri.file(filePath) : undefined;
+        
+        let model = uri ? monaco.editor.getModel(uri) : null;
+        if (!model) {
+          model = monaco.editor.createModel(content, lang, uri);
+        } else {
+          model.setValue(content);
+        }
+
+        const newTab = {
+          id: 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+          filePath: filePath || null,
+          title: title || (filePath ? filePath.split(/[\\/]/).pop() : 'Untitled'),
+          model: model,
+          isDirty: false
+        };
+
+        openTabs.push(newTab);
+        switchTab(newTab.id);
+      }
+
+      function closeTab(tabId) {
+        const index = openTabs.findIndex(t => t.id === tabId);
+        if (index === -1) return;
+
+        const tab = openTabs[index];
+        if (tab.isDirty && !confirm(`Save changes to ${tab.title}?`)) return;
+
+        tab.model.dispose();
+        openTabs.splice(index, 1);
+
+        if (activeTabId === tabId) {
+          if (openTabs.length > 0) {
+            const nextTab = openTabs[Math.max(0, index - 1)];
+            switchTab(nextTab.id);
+          } else {
+            activeTabId = null;
+            currentFilePath = null;
+            currentDocumentUri = null;
+            
+            const emptyModel = monaco.editor.createModel('', 'plaintext');
+            window.editor.setModel(emptyModel);
+          }
+        }
+
+        renderTabsUI();
+      }
+
+      const tabManager = new window.TabManager(
+    document.getElementById('tab-bar'),
+    (tab) => {
+      if (tab) {
+        currentFilePath = tab.filePath;
+        currentDocumentUri = tab.filePath ? pathToUri(tab.filePath) : null;
+        window.editor.setModel(tab.model);
+        updateSourceLanguageLabel();
+        if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
+      } else {
+        currentFilePath = null;
+        currentDocumentUri = null;
+        const emptyModel = monaco.editor.createModel('', 'plaintext');
+        window.editor.setModel(emptyModel);
+      }
+    }
+  );
+
+  // Bind '+' button from tabman.js
+  tabManager.onNewTabRequest = () => createNewTab();
+
+      async function refreshFileTree(directoryPath) {
+      if (!directoryPath) return;
+      currentDirectory = directoryPath;
+      await renderDirectory(directoryPath, document.getElementById('tree-root'));
+    }
+
+      async function openLoadedFile(file) {
+    if (!file) return;
+
+    const filePath = file.path || '';
+    const content = file.content ?? '';
+    const fileName = filePath ? filePath.split(/[\\/]/).pop() : 'Untitled';
+
+    const lang = activeLanguage(filePath);
+    const uri = filePath ? monaco.Uri.file(filePath) : undefined;
+
+    let model = uri ? monaco.editor.getModel(uri) : null;
+    if (!model) {
+      model = monaco.editor.createModel(content, lang, uri);
+    } else {
+      model.setValue(content);
+    }
+
+    tabManager.openTab(filePath, model, fileName);
+
+    if (filePath) {
+      const lastSeparator = Math.max(filePath.lastIndexOf('\\'), filePath.lastIndexOf('/'));
+      if (lastSeparator !== -1) {
+        currentDirectory = filePath.substring(0, lastSeparator);
+        await refreshFileTree(currentDirectory);
+      }
+    }
+  }
 
       function sendRequest(method, params) {
         const id = ++clangdRequestId;
@@ -355,11 +500,12 @@
       }
 
       window.editor = monaco.editor.create(document.getElementById('editor'), {
-          value: '// Start typing CMM code or JS here...\n',
           language: 'plaintext',
           theme: 'vs-dark',
           automaticLayout: true
       });
+
+      createNewTab();
 
       window.api.onClangdMessage((message) => {
         if (message.id !== undefined && pendingRequests.has(message.id)) {
@@ -441,6 +587,12 @@
       let changeTimeout = null;
 
       window.editor.onDidChangeModelContent(() => {
+       const activeTab = tabManager.getActiveTab();
+        if (activeTab && !activeTab.isDirty) {
+          activeTab.isDirty = true;
+          tabManager.render();
+        }
+
         if (!clangdStarted || !currentDocumentUri) return;
         if (changeTimeout) clearTimeout(changeTimeout);
         changeTimeout = setTimeout(() => {
@@ -460,8 +612,6 @@
 
       document.getElementById('new-btn').addEventListener('click', async () => {
         await openLoadedFile({ path: '', content: '' });
-        currentFilePath = null;
-        document.getElementById('status').textContent = 'clangd: idle';
       });
 
       // Save File Event
@@ -469,19 +619,21 @@
         const content = window.editor.getValue();
         const savedPath = await window.api.saveFile({ filePath: currentFilePath, content });
         if (savedPath) {
-          const previousLanguage = currentFilePath ? languageForPath(currentFilePath) : 'plaintext';
-          currentFilePath = savedPath;
-          const previousDocumentUri = currentDocumentUri;
-          currentDocumentUri = pathToUri(savedPath);
-          const nextLanguage = languageForPath(savedPath);
-          if (previousLanguage !== nextLanguage) monaco.editor.setModelLanguage(window.editor.getModel(), nextLanguage);
-          if (isActiveCppLanguage() && clangdStarted && previousDocumentUri !== currentDocumentUri) {
-            sendNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
-            window.api.stopClangd();
-            clangdStarted = false;
+          const activeTab = openTabs.find(t => t.id === activeTabId);
+          if (activeTab) {
+            activeTab.filePath = savedPath;
+            activeTab.title = savedPath.split(/[\\/]/).pop();
+            activeTab.isDirty = false;
           }
+
+          currentFilePath = savedPath;
+          currentDocumentUri = pathToUri(savedPath);
+          
+          const nextLanguage = languageForPath(savedPath);
+          monaco.editor.setModelLanguage(window.editor.getModel(), nextLanguage);
+          
           if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
-          if (!isActiveCppLanguage()) document.getElementById('status').textContent = hasEditorLanguage(savedPath) ? 'language: ready' : 'language: plaintext';
+          renderTabsUI();
         }
       });
 
@@ -675,6 +827,33 @@
         document.body.style.userSelect = '';
         window.editor.layout();
       });
+      // Connect toolbar "New" button
+  document.getElementById('new-btn').addEventListener('click', () => {
+    createNewTab();
+  });
+
+  // Save button updates tab dirty status and title
+  document.getElementById('save-btn').addEventListener('click', async () => {
+    const content = window.editor.getValue();
+    const savedPath = await window.api.saveFile({ filePath: currentFilePath, content });
+    if (savedPath) {
+      const activeTab = tabManager.getActiveTab();
+      if (activeTab) {
+        activeTab.filePath = savedPath;
+        activeTab.title = savedPath.split(/[\\/]/).pop();
+        activeTab.isDirty = false;
+      }
+
+      currentFilePath = savedPath;
+      currentDocumentUri = pathToUri(savedPath);
+      
+      const nextLanguage = languageForPath(savedPath);
+      monaco.editor.setModelLanguage(window.editor.getModel(), nextLanguage);
+      
+      if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
+      tabManager.render();
+    }
+  });
     });
   </script>
 
