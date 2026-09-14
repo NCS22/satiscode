@@ -1,4 +1,7 @@
+[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/a2-hc61499/shared_invite/zt-49ufy94zl-nTWdH_uBjDIkuPCbapoO0A)
+
 # Satiscode
+
 
 Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Editor, and clangd.
 
