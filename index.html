@@ -218,8 +218,11 @@
       function applySourceLanguage(language) {
         manualLanguage = language === 'auto' ? null : language;
         const selectedLanguage = activeLanguage(currentFilePath);
+        
+        // Tells Monaco Editor to change syntax highlighting mode
         monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
         updateSourceLanguageLabel();
+
         if (isActiveCppLanguage()) {
           startLanguageServer();
         } else if (clangdStarted) {
