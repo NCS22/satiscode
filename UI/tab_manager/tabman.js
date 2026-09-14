@@ -3,11 +3,12 @@ Warning: This file has been AI vibecoded
 */
 
 export class TabManager {
-  constructor(containerEl, onTabChange) {
+  constructor(containerEl, onTabChange, onSave) {
     this.containerEl = containerEl;
     this.tabs = [];
     this.activeTabId = null;
     this.onTabChange = onTabChange; // Callback when active tab swaps
+    this.onSave = onSave;           // Callback when a dirty tab should be saved
     this.onNewTabRequest = null;    // Callback when '+' button is clicked
 
     this.initEventListeners();
@@ -67,12 +68,23 @@ export class TabManager {
     if (this.onTabChange) this.onTabChange(tab || null);
   }
 
-  closeTab(id) {
+  async closeTab(id) {
     const index = this.tabs.findIndex(t => t.id === id);
     if (index === -1) return;
     
     const tab = this.tabs[index];
-    if (tab.isDirty && !confirm(`Save changes to ${tab.title}?`)) return;
+    if (tab.isDirty) {
+      if (this.onSave) {
+        if (confirm(`Save changes to ${tab.title}?`)) {
+          const saved = await this.onSave(tab);
+          if (saved === false) return;
+        } else if (!confirm('Discard changes?')) {
+          return;
+        }
+      } else if (!confirm('Discard changes?')) {
+        return;
+      }
+    }
 
     if (tab.model && typeof tab.model.dispose === 'function') {
       tab.model.dispose();
@@ -97,13 +109,17 @@ export class TabManager {
     return this.tabs.find(t => t.id === this.activeTabId) || null;
   }
 
+  getTabByFilePath(filePath) {
+    return this.tabs.find(t => t.filePath && t.filePath === filePath) || null;
+  }
+
   render() {
     if (!this.containerEl) return;
     
     const tabsHtml = this.tabs.map(tab => `
       <div class="tab ${tab.id === this.activeTabId ? 'active' : ''}" data-tab-id="${tab.id}">
-        <span class="tab-title">${escapeHtml(tab.title)}${tab.isDirty ? ' •' : ''}</span>
-        <span class="close-btn">&times;</span>
+        <button class="tab-title" type="button" aria-pressed="${tab.id === this.activeTabId}">${escapeHtml(tab.title)}${tab.isDirty ? ' •' : ''}</button>
+        <button class="close-btn" type="button" aria-label="Close ${escapeHtml(tab.title)}">&times;</button>
       </div>
     `).join('');
 
