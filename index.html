@@ -40,6 +40,7 @@
         <button class="source-language-option" data-source-language="typescript"><span class="language-badge">TS</span>TypeScript</button>
         <button class="source-language-option" data-source-language="json"><span class="language-badge">{ }</span>JSON</button>
         <button class="source-language-option" data-source-language="plaintext"><span class="language-badge">Aa</span>Plain Text</button>
+        <button class="source-language-option" data-source-language="python"><span class="language-badge">Py</span>Python</button>
       </div>
     </div>
     <select id="language-select" aria-label="Interface language">
@@ -109,7 +110,8 @@
       const languageByExtension = new Map([
         ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
         ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
-        ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json']
+        ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json'],
+        ['.py', 'python']
       ]);
       const translations = {
         en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', find: 'Find', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
