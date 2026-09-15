@@ -8,6 +8,7 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 ## Features
 
 - C and C++ language detection by file extension
+- Python syntax highligting.
 - Web language detection for HTML, CSS/SCSS, JavaScript/JSX, TypeScript/TSX, and JSON
 - clangd diagnostics, completion, hover, and go-to-definition
 - VS Code-style Problems panel with clickable diagnostics
@@ -25,7 +26,7 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 The editor remains usable when clangd is unavailable, but C/C++ language services will be disabled.
 
 >[!NOTE]
-> Please NOTE That from satiscode 1.2.0 onwardw LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
+> Please NOTE That from satiscode 1.2.0 onwards LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
 
 ## Development
 
@@ -34,7 +35,7 @@ npm install
 npm start
 ```
 
-Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. HTML, CSS, JavaScript, TypeScript, and JSON files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
+Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. HTML, CSS, JavaScript, TypeScript, JSON and Python files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
 
 ## Keyboard shortcuts
 
@@ -42,6 +43,8 @@ Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start
 - `Ctrl+O`: Open file
 - `Ctrl+S`: Save
 - `Ctrl+Shift+S`: Save As
+- `Ctrl+f`: Find
+- `Ctrl+.`: Toggle Problems pannel
 
 ## Build the Windows installer
 
@@ -56,6 +59,7 @@ The installer is written to `dist\Satiscode Setup 1.0.0.exe`. The installer is u
 - `main.js`: Electron main process, filesystem APIs, clangd process bridge, and shutdown handling
 - `preload.js`: isolated renderer IPC API
 - `index.html`: Monaco editor UI, Explorer, Problems panel, and language-service client
+- `icons.js`: Loads the icon packs located in `icons/`
 
 ## Security notes
 
