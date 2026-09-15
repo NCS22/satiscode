@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Satiscode</title>
   <link rel="stylesheet" href="styles/style1.css">
   <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
@@ -11,14 +11,14 @@
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
     import { TabManager } from './UI/tab_manager/tabman.js';
 
-    // Initialize local icon system from icons/style1/icons.json
-    await initIcons();
-
-    // Attach getters to window for internal renderer access
+    // Attach getters to window for internal renderer access immediately
     window.getFileIcon = getFileIcon;
     window.getFolderIcon = getFolderIcon;
     window.getChevronIcon = getChevronIcon;
     window.TabManager = TabManager;
+
+    // Initialize local icon system from icons/style1/icons.json
+    await initIcons();
   </script>
 </head>
 <body>
