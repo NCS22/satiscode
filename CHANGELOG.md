@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.4.0](https://github.com/gtref/satiscode/releases/tag/v1.4.0) - 2026-09-15
+
+- Added Tab manager
+- Added python stntax support.
+- Added ghost text support.
+- Added conceptual Code base indexing API.
+- Added more icons to the icon pack.
+- Added local in project dir clangd. `( ONLY FOR INSTALLED VERSION )`
+- Changed CSS to be softer.
+- Added a conceptual status indicater elelement to the index.html file.
+
 ## [1.1.0](https://github.com/gtref/satiscode/releases/tag/v1.1.0) - 2026-09-10
 
 - Added styles directory for root css files.

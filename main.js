@@ -1,3 +1,4 @@
+process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -10,8 +11,8 @@ let isQuitting = false;
 function sendToClangd(message) {
   if (!clangdProcess || clangdProcess.stdin.destroyed) return;
   const body = Buffer.from(JSON.stringify(message), 'utf8');
-  clangdProcess.stdin.write(`Content-Length: ${body.length}\r\n\r\n`);
-  clangdProcess.stdin.write(body);
+  const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
+  clangdProcess.stdin.write(Buffer.concat([header, body]));
 }
 
 function sendToRenderer(event, channel, ...args) {
@@ -59,15 +60,18 @@ function gracefulStopClangd() {
   });
 }
 
+function getClangdPath() {
+  const isWin = process.platform === 'win32';
+  const clangdExecutable = isWin ? 'clangd.exe' : 'clangd';
+  const baseDir = app.isPackaged ? process.resourcesPath : __dirname;
+  return path.join(baseDir, 'bin', clangdExecutable);
+}
+
 function startClangd(event, rootPath) {
   stopClangd();
   const projectRoot = findProjectRoot(rootPath);
-  const clangdCandidates = [
-    process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'LLVM', 'bin', 'clangd.exe'),
-    process.env.ProgramW6432 && path.join(process.env.ProgramW6432, 'LLVM', 'bin', 'clangd.exe'),
-    'clangd'
-  ].filter(Boolean);
-  const clangdCommand = clangdCandidates.find((candidate) => candidate === 'clangd' || fs.existsSync(candidate)) || 'clangd';
+  const clangdCommand = getClangdPath();
+
   clangdProcess = spawn(clangdCommand, ['--background-index', '--header-insertion=never'], {
     cwd: projectRoot,
     stdio: ['pipe', 'pipe', 'pipe']
@@ -119,7 +123,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      sandbox: false
     }
   });
 

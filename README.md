@@ -1,10 +1,14 @@
+[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/a2-hc61499/shared_invite/zt-49ufy94zl-nTWdH_uBjDIkuPCbapoO0A)
+
 # Satiscode
+
 
 Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Editor, and clangd.
 
 ## Features
 
 - C and C++ language detection by file extension
+- Python syntax highligting.
 - Web language detection for HTML, CSS/SCSS, JavaScript/JSX, TypeScript/TSX, and JSON
 - clangd diagnostics, completion, hover, and go-to-definition
 - VS Code-style Problems panel with clickable diagnostics
@@ -18,9 +22,11 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 
 - Windows 10 or newer
 - Node.js 20 or newer
-- LLVM/clangd installed and available at `C:\Program Files\LLVM\bin\clangd.exe` or on `PATH`
 
 The editor remains usable when clangd is unavailable, but C/C++ language services will be disabled.
+
+>[!NOTE]
+> Please NOTE That from satiscode 1.2.0 onwards LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
 
 ## Development
 
@@ -29,7 +35,7 @@ npm install
 npm start
 ```
 
-Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. HTML, CSS, JavaScript, TypeScript, and JSON files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
+Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. HTML, CSS, JavaScript, TypeScript, JSON and Python files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
 
 ## Keyboard shortcuts
 
@@ -37,6 +43,8 @@ Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start
 - `Ctrl+O`: Open file
 - `Ctrl+S`: Save
 - `Ctrl+Shift+S`: Save As
+- `Ctrl+f`: Find
+- `Ctrl+.`: Toggle Problems pannel
 
 ## Build the Windows installer
 
@@ -51,6 +59,7 @@ The installer is written to `dist\Satiscode Setup 1.0.0.exe`. The installer is u
 - `main.js`: Electron main process, filesystem APIs, clangd process bridge, and shutdown handling
 - `preload.js`: isolated renderer IPC API
 - `index.html`: Monaco editor UI, Explorer, Problems panel, and language-service client
+- `icons.js`: Loads the icon packs located in `icons/`
 
 ## Security notes
 
@@ -60,9 +69,20 @@ The renderer uses context isolation and does not have direct Node.js access. Fil
 
 Satiscode is licensed under the [MIT License](LICENSE).
 
-## Contributers
-Thanks to all those who help in the maintenance of this project.
+## Contributors
 
-<a href="https://github.com/gtref/satiscode/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=gtref/satiscode" />
-</a>
+Thanks to these awesome people for helping build **satiscode**:
+
+<div align="center">
+
+### 🤝 Contributors
+
+| [<img src="https://github.com/gtref.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@gtref</b></sub>](https://github.com/gtref) | [<img src="https://github.com/ncs22.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@ncs22</b></sub>](https://github.com/ncs22) | [<img src="https://github.com/Igcabr01.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@Igcabr01</b></sub>](https://github.com/Igcabr01) | [<img src="https://github.com/apps/coderabbitai.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@coderabbitai</b></sub>](https://github.com/apps/coderabbitai) | [<img src="https://github.com/apps/dependabot.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@dependabot</b></sub>](https://github.com/apps/dependabot) |
+| :---: | :---: | :---: | :---: | :---: |
+| Project Lead | Contributor | Contributor | Code Review Bot | Security Bot |
+
+</div>
+
+# Copy atributions
+This tool uses librarys and executables from the `clangd` util by `LLVM`, to see the copy atributions [please click here](NOTICES.md)
+
