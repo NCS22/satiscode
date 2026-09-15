@@ -9,6 +9,7 @@
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
   <script type="module">
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
+    import { loadTheme, applyTheme, getAvailableThemes } from './themes.js'; 
 
     // Initialize local icon system from icons/style1/icons.json
     await initIcons();
@@ -17,6 +18,15 @@
     window.getFileIcon = getFileIcon;
     window.getFolderIcon = getFolderIcon;
     window.getChevronIcon = getChevronIcon;
+
+    // Attach theme functions for internal renderer access
+    window.loadTheme = loadTheme;
+    window.applyTheme = applyTheme;
+    window.getAvailableThemes = getAvailableThemes;
+
+    const savedTheme = localStorage.getItem('satiscode-theme') || 'dark';
+    document.getElementById('theme-select').value = savedTheme;
+    await applyTheme(savedTheme);
   </script>
 </head>
 <body>
@@ -43,9 +53,9 @@
       </div>
     </div>
     <select id="theme-select" aria-label="Interface Theme">
-      <option value="dark" selected>Dark Theme</option>
+      <option value="dark">Dark Theme</option>
       <option value="light">Light Theme</option>
-      <option value="hc">High Contrast</option>
+      <!--<option value="hc">High Contrast</option>-->
     </select>
     <select id="language-select" aria-label="Interface language">
       <option value="en">English</option>
@@ -490,6 +500,11 @@
       document.getElementById('language-select').addEventListener('change', (event) => applyInterfaceLanguage(event.target.value));
       document.getElementById('exit-btn').addEventListener('click', () => window.api.exit());
       document.getElementById('tree-root').textContent = 'Open a file to browse its folder';
+
+      // Theme selector
+      document.getElementById('theme-select').addEventListener('change', (event) => {
+        applyTheme(event.target.value); 
+      })
 
       function toggleProblemsPanel() {
         const panel = document.getElementById('problems-panel');
