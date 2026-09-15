@@ -36,6 +36,7 @@
             }]
           };
         },
+        disposeInlineCompletions() {},
         freeInlineCompletions() {}
       })
     );

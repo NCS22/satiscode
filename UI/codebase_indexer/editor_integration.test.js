@@ -44,4 +44,6 @@ test('provider ignores inactive models and returns a prefix replacement', () => 
   assert.equal(result.items[0].insertText, 'render');
   assert.equal(result.items[0].range.startColumn, 2);
   assert.equal(result.items[0].range.endColumn, 5);
+  assert.equal(typeof providers.get('javascript').disposeInlineCompletions, 'function');
+  assert.equal(typeof providers.get('javascript').freeInlineCompletions, 'function');
 });
