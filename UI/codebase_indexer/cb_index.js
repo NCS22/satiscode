@@ -1,9 +1,4 @@
-/*
-* This file contains an experomental codebase indexer API. This is not implamented yet.
-* NOTE THE FOLLOWING:
-* 
-* This api was partially vibecoded.
-*/
+/* Indexes identifiers in the active document for lightweight ghost text. */
 
 const { EventEmitter } = require('events');
 
@@ -14,6 +9,7 @@ class CodebaseIndexer extends EventEmitter {
     this.symbols = new Set();
     this.currentDocId = null;
     this.debounceTimer = null;
+    this.updateVersion = 0;
   }
 
   /**
@@ -22,12 +18,14 @@ class CodebaseIndexer extends EventEmitter {
    */
   updateActiveDocument(docId, text, delayMs = 150) {
     this.currentDocId = docId;
+    const updateVersion = ++this.updateVersion;
     clearTimeout(this.debounceTimer);
 
     this.debounceTimer = setTimeout(() => {
+      if (updateVersion !== this.updateVersion || docId !== this.currentDocId) return;
       this._index(text);
       // Notify UI listeners that the index for this document refreshed
-      this.emit('index:updated', { docId: this.currentDocId, symbolCount: this.symbols.size });
+      this.emit('index:updated', { docId, symbolCount: this.symbols.size });
     }, delayMs);
   }
 
@@ -92,6 +90,7 @@ class CodebaseIndexer extends EventEmitter {
    */
   destroy() {
     clearTimeout(this.debounceTimer);
+    this.updateVersion++;
     this.removeAllListeners();
   }
 }

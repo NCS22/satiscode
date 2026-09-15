@@ -75,6 +75,7 @@
   </div>
 
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script src="UI/codebase_indexer/editor_integration.js"></script>
   <script>
     require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' } });
 
@@ -117,6 +118,7 @@
         ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json'],
         ['.py', 'python']
       ]);
+      const codebaseIndexerLanguages = window.CodebaseIndexerEditor.supportedLanguages;
       const translations = {
         en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', find: 'Find', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
         es: { newFile: 'Nuevo', openFile: 'Abrir', saveFile: 'Guardar', saveAs: 'Guardar como', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', problems: 'Problemas', noProblems: 'No se detectaron problemas.' }
@@ -137,6 +139,12 @@
       const hasEditorLanguage = (filePath) => isCppFile(filePath) || languageByExtension.has(extensionForPath(filePath));
       const activeLanguage = (filePath) => manualLanguage || languageForPath(filePath || '');
       const isActiveCppLanguage = () => activeLanguage(currentFilePath) === 'c' || activeLanguage(currentFilePath) === 'cpp';
+      const updateCodebaseIndex = () => {
+        const model = window.editor?.getModel();
+        if (!model) return;
+        const text = codebaseIndexerLanguages.has(model.getLanguageId()) ? model.getValue() : '';
+        window.api.updateCodebaseIndex(model.uri.toString(), text);
+      };
       const pathToUri = (filePath) => {
         const normalized = filePath.replace(/\\/g, '/');
         return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
@@ -215,8 +223,8 @@
 
       function updateSourceLanguageLabel() {
         const language = activeLanguage(currentFilePath);
-        const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', plaintext: 'Plain Text' };
-        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', plaintext: 'Aa' };
+        const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', plaintext: 'Plain Text', python: 'Python' };
+        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', plaintext: 'Aa', python: 'Py' };
         document.getElementById('source-language-label').textContent = labels[language] || labels.auto;
         document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
       }
@@ -226,6 +234,7 @@
         const selectedLanguage = activeLanguage(currentFilePath);
         
         monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
+        updateCodebaseIndex();
         updateSourceLanguageLabel();
 
         if (isActiveCppLanguage()) {
@@ -340,6 +349,8 @@
         currentDocumentUri = tab.filePath ? pathToUri(tab.filePath) : null;
 
         window.editor.setModel(tab.model);
+        monaco.editor.setModelLanguage(tab.model, activeLanguage(currentFilePath));
+        updateCodebaseIndex();
 
         updateSourceLanguageLabel();
         if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
@@ -420,6 +431,8 @@
         currentDocumentUri = tab.filePath ? pathToUri(tab.filePath) : null;
         documentVersion = 1;
         window.editor.setModel(tab.model);
+        monaco.editor.setModelLanguage(tab.model, activeLanguage(currentFilePath));
+        updateCodebaseIndex();
         updateSourceLanguageLabel();
 
         if (isActiveCppLanguage()) {
@@ -456,6 +469,7 @@
         }
         const emptyModel = monaco.editor.createModel('', 'plaintext');
         window.editor.setModel(emptyModel);
+        updateCodebaseIndex();
       }
     },
     (tab) => saveTab(tab)
@@ -548,6 +562,7 @@
       window.editor = monaco.editor.create(document.getElementById('editor'), {
           language: 'plaintext',
           theme: 'vs-dark',
+          inlineSuggest: { enabled: true },
           automaticLayout: true
       });
 
@@ -630,12 +645,16 @@
         });
       });
 
+      window.CodebaseIndexerEditor.registerInlineCompletionProviders(monaco, window.editor, window.api);
+
       window.editor.onDidChangeModelContent(() => {
        const activeTab = tabManager.getActiveTab();
         if (activeTab && !activeTab.isDirty) {
           activeTab.isDirty = true;
           tabManager.render();
         }
+
+        updateCodebaseIndex();
 
         if (!clangdStarted || !currentDocumentUri) return;
         if (changeTimeout) clearTimeout(changeTimeout);
@@ -672,6 +691,7 @@
           currentFilePath = savedPath;
           currentDocumentUri = pathToUri(savedPath);
           monaco.editor.setModelLanguage(tab.model, languageForPath(savedPath));
+          updateCodebaseIndex();
           updateSourceLanguageLabel();
           if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
         }
