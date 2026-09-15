@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win nsis"
+    "dist:win": "electron-builder --win nsis",
+    "test": "node --test"
   },
   "keywords": [
     "electron",
@@ -40,6 +41,7 @@
       "index.html",
       "main.js",
       "preload.js",
+      "UI/codebase_indexer/**/*",
       "package.json",
       "icons.js",
       "UI/**/*",

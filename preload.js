@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const { indexer } = require('./UI/codebase_indexer/cb_index');
 
 contextBridge.exposeInMainWorld('api', {
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
@@ -7,6 +8,8 @@ contextBridge.exposeInMainWorld('api', {
   saveFile: (data) => ipcRenderer.invoke('file:save', data),
   listDirectory: (directoryPath) => ipcRenderer.invoke('directory:list', directoryPath),
   openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
+  updateCodebaseIndex: (documentId, text) => indexer.updateActiveDocument(documentId, text),
+  queryCodebaseGhostText: (prefix) => indexer.queryGhostText(prefix),
   exit: () => ipcRenderer.invoke('app:exit'),
   startClangd: (rootPath) => ipcRenderer.invoke('clangd:start', rootPath),
   sendClangdMessage: (message) => ipcRenderer.send('clangd:message', message),
