@@ -5,9 +5,9 @@
 * This api was partially vibecoded.
 */
 
-import { EventEmitter } from 'events';
+const { EventEmitter } = require('events');
 
-export class CodebaseIndexer extends EventEmitter {
+class CodebaseIndexer extends EventEmitter {
   constructor() {
     super();
     this.wordMap = new Map();
@@ -97,4 +97,6 @@ export class CodebaseIndexer extends EventEmitter {
 }
 
 // Export singleton instance for UI usage
-export const indexer = new CodebaseIndexer();
+const indexer = new CodebaseIndexer();
+
+module.exports = { CodebaseIndexer, indexer };
