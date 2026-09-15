@@ -366,10 +366,13 @@
     };
     require.config({ paths: { 'vs': `${monacoBaseUrl}vs` }});
     require(['vs/editor/editor.main'], function() {
+      const MONACO_THEME_MAP = { dark: 'vs-dark', light: 'vs' };
+      const savedThemeId = localStorage.getItem('satiscode-theme') || 'dark';
+
       window.editor = monaco.editor.create(document.getElementById('editor'), {
         value: '// Start typing CMM code or JS here...\n',
         language: 'plaintext',
-        theme: 'vs-dark',
+        theme: MONACO_THEME_MAP[savedThemeId] || 'vs-dark',
         automaticLayout: true
       });
 
@@ -688,6 +691,11 @@
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
         window.editor.layout();
+      });
+
+      // Apply the real Theme to Mocano now that exists
+      applyTheme(savedThemeId).then(() => {
+        document.getElementById('theme-select').value = savedThemeId;
       });
     });
   </script>
